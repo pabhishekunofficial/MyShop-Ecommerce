@@ -13,10 +13,12 @@ import {
 import Message from "../Components/Message";
 import { addToCart, removeFromCart } from "../actions/cartActions";
 
-const CartScreen = () => {
+const CartScreen = ({history}) => {
   const params = useParams();
 
   const location = useLocation();
+
+  const navigate = useNavigate()
 
   const productId = params.id;
 
@@ -38,7 +40,7 @@ const CartScreen = () => {
   };
 
   const checkoutHandler = () => {
-    console.log("checkout");
+    navigate(`/login?redirect=/shipping`);
   };
 
   return (
@@ -113,7 +115,7 @@ const CartScreen = () => {
                 disabled={cartItems.length === 0}
                 onClick={checkoutHandler}
               >
-                Proceed To Checkout
+               Proceed To Checkout
               </Button>
             </ListGroup.Item>
           </ListGroup>

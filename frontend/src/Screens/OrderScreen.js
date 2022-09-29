@@ -20,8 +20,8 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import Message from "../Components/Message";
 import Loader from "../Components/Loader";
-import { getOrderDetails, payOrder } from "../actions/orderActions";
-import { ORDER_PAY_RESET } from "../constants/orderConstants";
+import { getOrderDetails, payOrder, deliverOrder } from "../actions/orderActions";
+import { ORDER_PAY_RESET, ORDER_DELIVER_RESET} from "../constants/orderConstants";
 
 const OrderScreen = () => {
   const params = useParams();
@@ -37,6 +37,12 @@ const OrderScreen = () => {
 
   const orderPay = useSelector((state) => state.orderPay);
   const { loading: loadingPay, success: successPay } = orderPay;
+
+  const orderDeliver = useSelector((state) => state.orderDeliver);
+  const { loading: loadingDeliver, success: successDeliver } = orderDeliver;
+
+  const userLogin = useSelector((state) => state.userLogin);
+  const { userInfo } = userLogin;
 
   if (!loading) {
     const addDecimals = (num) => {
@@ -61,8 +67,10 @@ const OrderScreen = () => {
       document.body.appendChild(script)
     }
 
-    if(!order || successPay){
+    if(!order || successPay || successDeliver){
       dispatch({type: ORDER_PAY_RESET})
+      dispatch({type: ORDER_DELIVER_RESET})
+
       dispatch(getOrderDetails(orderId));
     } else if(!order.isPaid){
       if(!window.paypal){
@@ -72,11 +80,16 @@ const OrderScreen = () => {
       }
     }
       
-  }, [dispatch, orderId, successPay, order]);
+  }, [dispatch, orderId, successPay, order, successDeliver]);
 
   const successPaymentHandler = (paymentResult) => {
     console.log(paymentResult)
     dispatch(payOrder(orderId, paymentResult))
+  }
+
+
+  const deliverHandler = () => {
+    dispatch(deliverOrder(order))
   }
    
   return (
@@ -109,7 +122,7 @@ const OrderScreen = () => {
                     {order.shippingAddress.postalCode} ,{" "}
                     {order.shippingAddress.country}
                   </p>
-                  {order.isDeliverd ? <Message variant='success'>Delivered on {order.deliveredAt}</Message> : <Message variant='danger'>Not delivered</Message>}
+                  {order.isDelivered ? <Message variant='success'>Delivered on {order.deliveredAt}</Message> : <Message variant='danger'>Not delivered</Message>}
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <h2>Payment Method</h2>
@@ -192,6 +205,16 @@ const OrderScreen = () => {
                       {!sdkReady ? <Loader /> : (<PayPalButton amount= {order.totalPrice} onSuccess = {successPaymentHandler} />)}
                     </ListGroup.Item>
                   )}
+                  {loadingDeliver && <Loader />}
+                  {
+                    userInfo.isAdmin && order.isPaid && !order.isDelivered && (
+                      <ListGroup.Item>
+                        <Button type="button" className="btn btn-block w-100" onClick={deliverHandler}>
+                          Mark As Deliver
+                        </Button>
+                      </ListGroup.Item>
+                    )
+                  }
                 </ListGroup>
               </Card>
             </Col>
